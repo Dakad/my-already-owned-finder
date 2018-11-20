@@ -17,14 +17,17 @@ const searchForDuplicate = downloadItem => {
 
     browser.downloads.search({
         query: [name],
-        mime: 'video/mp4'
+        // mime: 'video/mp4'
     }).then((downloads) => {
-        debugger;
         console.log(downloads);
 
         if (downloads.length > 0)
-            console.log(':-) Already IN');
-    })
+            Promise.all([
+                browser.downloads.cancel(downloadItem.id),
+                browser.downloads.erase({ id: downloadItem.id })
+            ]).then(_ => console.log("Cancel & Erased :-)"))
+            .catch(e => console.error("Promise.race : ", e))
+    });
 }
 
 
