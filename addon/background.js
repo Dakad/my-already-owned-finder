@@ -1,6 +1,6 @@
 browser.contextMenus.create({
-    id: "ddg",
-    title: "Find in Download",
+    id: "find-item-in-download",
+    title: "Find in Downloads",
     contexts: ["selection"]
 });
 
@@ -8,6 +8,7 @@ browser.contextMenus.create({
 browser.downloads.search({
     orderBy: ["-startTime"],
     limit: 5,
+    mime: 'video/mp4'
 }).then((downloads) => {
     console.log(downloads);
 })
@@ -16,15 +17,16 @@ browser.downloads.search({
 browser.contextMenus.onClicked.addListener(contextMenuAction);
 
 function contextMenuAction(info, tab) {
-    const selected = info.selectionText;
-
-    console.log(selected);
+    console.debug(info);
+    const selected = info.selectionText.trim();
 
     browser.downloads.search({
         query: [selected],
         limit: 3,
+        mime: 'video/mp4'
     }).then((downloads) => {
-        console.log(downloads);
+        if (downloads.length > 0)
+            console.log(':-) Already IN');
     })
 
 }
