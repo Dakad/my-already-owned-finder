@@ -1,0 +1,25 @@
+{
+
+    "description": "WebExtension to not download twice the same item",
+    "manifest_version": 2,
+    "name": "my-already-owned-finder",
+    "version": "1.0",
+    "homepage_url": "https://github.com/Dakad/my-already-owned-finder",
+    "icons": {
+        "48": "icons/"
+    },
+
+    "permissions": [
+        "activeTab",
+        "contextMenus",
+        "downloads",
+        "downloads.search",
+        "downloads.cancel"
+    ],
+
+    "background": {
+        "scripts": [
+            "background.js"
+        ]
+    }
+}
