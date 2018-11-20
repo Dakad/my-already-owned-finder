@@ -12,9 +12,7 @@
     "permissions": [
         "activeTab",
         "contextMenus",
-        "downloads",
-        "downloads.search",
-        "downloads.cancel"
+        "downloads"
     ],
 
     "background": {
