@@ -1,32 +1,34 @@
-browser.contextMenus.create({
-    id: "find-item-in-download",
-    title: "Find in Downloads",
-    contexts: ["selection"]
-});
-
-
 browser.downloads.search({
     orderBy: ["-startTime"],
-    limit: 5,
+    limit: 7,
     mime: 'video/mp4'
 }).then((downloads) => {
     console.log(downloads);
+
+
 })
 
 
-browser.contextMenus.onClicked.addListener(contextMenuAction);
+const searchForDuplicate = downloadItem => {
+    let [name, ] = downloadItem.filename.split('\\').reverse()
+    name = name.replace(/(-[0-9]+).*/, '');
 
-function contextMenuAction(info, tab) {
-    console.debug(info);
-    const selected = info.selectionText.trim();
+    console.log(name);
 
     browser.downloads.search({
-        query: [selected],
-        limit: 3,
-        mime: 'video/mp4'
+        query: [name],
+        // mime: 'video/mp4'
     }).then((downloads) => {
-        if (downloads.length > 0)
-            console.log(':-) Already IN');
-    })
+        console.log(downloads);
 
+        if (downloads.length > 0)
+            Promise.all([
+                browser.downloads.cancel(downloadItem.id),
+                browser.downloads.erase({ id: downloadItem.id })
+            ]).then(_ => console.log("Cancel & Erased :-)"))
+            .catch(e => console.error("Promise.race : ", e))
+    });
 }
+
+
+browser.downloads.onCreated.addListener(searchForDuplicate)
