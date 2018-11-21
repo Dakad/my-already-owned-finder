@@ -12,7 +12,8 @@
     "permissions": [
         "activeTab",
         "contextMenus",
-        "downloads"
+        "downloads",
+        "storage"
     ],
 
     "background": {
