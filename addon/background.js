@@ -7,6 +7,32 @@ browser.downloads.search({
 
 })
 
+const _getName = (filename) => filename.split('\\').reverse()[0].replace(/(-[0-9]+).*/, '');
+
+const _getDomain = function(url) {
+    return new URL(url).hostname;
+    // const link = document.createElement('a');
+    // link.href = url;
+    // return link.hostname;
+}
+
+const PnStore = new Map();
+
+class PnItem {
+    constructor({ id, filename, mime, referrer, url, startTime, fileSize, state }) {
+        this.id = id;
+        this.filename = filename;
+        this.mime = mime;
+        this.urlPage = referrer; // The downloading page
+        this.src = url; // The real src of the video
+        this.startTime = startTime;
+        this.fileSize = fileSize;
+        this.state = state;
+        this.name = _getName(filename);
+        this.domain = _getDomain(referrer);
+    }
+}
+
 
 const searchForDuplicate = downloadItem => {
     let [name, ] = downloadItem.filename.split('\\').reverse()
@@ -31,14 +57,24 @@ const searchForDuplicate = downloadItem => {
 
             console.log('After splicing : ', downloads);
 
+            return downloads.length == 0;
+        }).then(isNew => {
             // No matching download
-            if (downloads.length == 0)
-                return undefined;
+            debugger;
+            if (isNew) {
+                const newPn = new PnItem(downloadItem);
+                PnStore.set(newPn.urlPage, newPn);
+                console.log("New Vids :-)");
+                return browser.storage.local.set({
+                    'pn': PnStore
+                });
+            } else {
+                return Promise.all([
+                    browser.downloads.cancel(downloadItem.id),
+                    browser.downloads.erase({ id: downloadItem.id })
+                ]);
+            }
 
-            return Promise.all([
-                browser.downloads.cancel(downloadItem.id),
-                browser.downloads.erase({ id: downloadItem.id })
-            ]);
         }).then(_ => _ ? console.log("Cancel & Erased :-)", downloadItem.id, _) : null)
         .catch(e => console.error("Promise.race : ", e))
 }
