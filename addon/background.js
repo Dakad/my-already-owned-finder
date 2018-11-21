@@ -50,17 +50,14 @@ const searchForDuplicate = downloadItem => {
             // url: downloadItem.url
             // mime: 'video/mp4'
         }).then((downloads) => {
-            console.log(downloads);
-
             const currentDownload = downloads.findIndex(({ id }) => id == downloadItem.id);
             downloads.splice(currentDownload, 1);
 
             console.log('After splicing : ', downloads);
-
             return downloads.length == 0;
         }).then(isNew => {
             // No matching download
-            debugger;
+
             if (isNew) {
                 const newPn = new PnItem(downloadItem);
                 PnStore.set(newPn.urlPage, newPn);
@@ -80,4 +77,28 @@ const searchForDuplicate = downloadItem => {
 }
 
 
+/**
+ * 
+ * @param {DownloadItem} change an  object that changed
+ */
+const updateCompleteDownload = function update({ state, exists, id }) {
+    if (state.current != 'complete')
+        return undefined;
+
+    // Search for the old downloadedItem
+    return browser.downloads.search({
+        id,
+        limit: 1
+    }).then(([download]) => {
+        if (!download)
+            return undefined;
+
+        console.log(download);
+    })
+
+}
+
+
 browser.downloads.onCreated.addListener(searchForDuplicate);
+
+browser.downloads.onChanged.addListener(updateCompleteDownload);
