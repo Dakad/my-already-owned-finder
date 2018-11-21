@@ -35,11 +35,9 @@ class PnItem {
 
 
 const searchForDuplicate = downloadItem => {
-    let [name, ] = downloadItem.filename.split('\\').reverse()
-    name = name.replace(/(-[0-9]+).*/, '');
+    const name = _getName(downloadItem.filename);
 
-    console.log(downloadItem);
-    console.log(name);
+    console.log(downloadItem, name);
 
     if (downloadItem.mime && !downloadItem.mime.startsWith('video')) {
         return;
@@ -50,15 +48,13 @@ const searchForDuplicate = downloadItem => {
             // url: downloadItem.url
             // mime: 'video/mp4'
         }).then((downloads) => {
+            // Remove the current download item
             const currentDownload = downloads.findIndex(({ id }) => id == downloadItem.id);
             downloads.splice(currentDownload, 1);
-
-            console.log('After splicing : ', downloads);
             return downloads.length == 0;
-        }).then(isNew => {
-            // No matching download
+        }).then(isNew => { // isNew if the rest of splicing is empty
 
-            if (isNew) {
+            if (isNew) { // No duplicate remaining after splicing
                 const newPn = new PnItem(downloadItem);
                 PnStore.set(newPn.urlPage, newPn);
                 console.log("New Vids :-)");
@@ -81,7 +77,10 @@ const searchForDuplicate = downloadItem => {
  * 
  * @param {DownloadItem} change an  object that changed
  */
-const updateCompleteDownload = function update({ state, exists, id }) {
+const updateCompleteDownload = function update(change) {
+    const { state, id } = change;
+    console.log(change);
+
     if (state.current != 'complete')
         return undefined;
 
@@ -93,8 +92,13 @@ const updateCompleteDownload = function update({ state, exists, id }) {
         if (!download)
             return undefined;
 
-        console.log(download);
-    })
+        PnStore.set(download.referrer, new PnItem(download));
+
+        return browser.storage.local.set({
+            'pn': PnStore
+        });
+        return true;
+    }).then(ok => ok ? console.log('Updated PnItem : #' + id) : null);
 
 }
 
