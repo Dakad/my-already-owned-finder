@@ -11,7 +11,8 @@
     "scripts": {
         "test": "karma start",
         "test:debug": "karma start --no-single-run --auto-watch",
-        "web-ext": "web-ext run -s ./addon --start-url about:debugging --browser-console"
+        "web-ext": "web-ext run -s ./addon --start-url about:debugging --browser-console",
+        "build" : "web-ext build -s ./addon -a ./build/Release/"
     },
     "bugs": {
         "url": "https://github.com/Dakad/my-finder-already-owned/issues"
