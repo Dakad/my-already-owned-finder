@@ -107,7 +107,7 @@ const updateCompleteDownload = function update(change) {
 const _notify = function({ title, msg }) {
     return browser.notifications.create({
         "type": "basic",
-        // "iconUrl": browser.extension.getURL("icons/finder-48.png"),
+        "iconUrl": browser.extension.getURL("icons/finder.svg"),
         "title": 'Alreay Owned Finder',
         "message": msg,
         eventTime:  Date.now() + (1000 * 3)
