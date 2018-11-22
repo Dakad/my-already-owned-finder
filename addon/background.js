@@ -1,12 +1,3 @@
-browser.downloads.search({
-    state: 'complete',
-    orderBy: ['-startTime']
-}).then((downloads) => {
-    console.log(downloads);
-
-
-})
-
 const _getName = (filename) => filename.split('\\').reverse()[0].replace(/(-[0-9]+).*/, '');
 
 const _getDomain = function(url) {
@@ -45,8 +36,9 @@ class PnItem {
  */
 const searchForDuplicate = function(download) {
     const name = _getName(download.filename);
+    let newPn;
 
-    console.log(download, name);
+    // console.log(download, name);
 
     // Only handle the download of type video
     if (download.mime && !download.mime.startsWith('video')) {
@@ -60,14 +52,16 @@ const searchForDuplicate = function(download) {
         }).then((downloads) => {
             // Remove the current download item
             const currentDownload = downloads.findIndex(({ id }) => id == download.id);
-            downloads.splice(currentDownload, 1);
+            if(currentDownload != -1){
+                downloads.splice(currentDownload, 1);
+            }
             return downloads.length == 0;
         }).then(isNew => { // isNew if the rest of splicing is empty
 
             if (isNew) { // No duplicate remaining after splicing
-                const newPn = new PnItem(download);
+                newPn = new PnItem(download);
                 PnStore.set(newPn.urlPage, newPn);
-                console.log("New Vids :-)");
+                console.log("New Vids :-)", newPn.name);
                 return browser.storage.local.set({
                     'pn': PnStore
                 });
@@ -75,11 +69,10 @@ const searchForDuplicate = function(download) {
                 return Promise.all([
                     browser.downloads.cancel(download.id),
                     browser.downloads.erase({ id: download.id })
-                ]);
+                ]).catch(e => console.error("Promise.race : ", e));
             }
-
-        }).then(_ => _ ? console.log("Cancel & Erased :-)", download.id, _) : null)
-        .catch(e => console.error("Promise.race : ", e))
+        }).then(_ => _ ? _notify({ msg: name }) : null)
+        .catch(e => console.error(e))
 }
 
 
@@ -89,7 +82,7 @@ const searchForDuplicate = function(download) {
  */
 const updateCompleteDownload = function update(change) {
     const { state, id } = change;
-    console.log(change);
+    console.log(change.state);
 
     if (state.current != 'complete')
         return undefined;
@@ -100,7 +93,7 @@ const updateCompleteDownload = function update(change) {
         limit: 1
 
     }).then(([download]) => {
-        if (!download || !download.startsWith('video'))
+        if (!download)
             return undefined;
 
         PnStore.set(download.referrer, new PnItem(download));
@@ -108,10 +101,28 @@ const updateCompleteDownload = function update(change) {
         return browser.storage.local.set({
             'pn': PnStore
         }).then(_ => true);
-    }).then(ok => ok ? console.log('Updated PnItem : #' + id) : null);
+    }).then(ok => ok ? console.log('Updated PnItem : #' + id ) : null);
+};
 
-}
+const _notify = function({ title, msg }) {
+    return browser.notifications.create({
+        "type": "basic",
+        // "iconUrl": browser.extension.getURL("icons/finder-48.png"),
+        "title": 'Alreay Owned Finder',
+        "message": msg,
+        eventTime:  Date.now() + (1000 * 3)
+    });
+};
 
+
+// Get the last 10 completed download
+browser.downloads.search({
+    state: 'complete',
+    orderBy: ['-startTime'],
+    limit: 10
+}).then((downloads) => {
+    console.log(downloads);
+});
 
 browser.downloads.onCreated.addListener(searchForDuplicate);
 
