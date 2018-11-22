@@ -48,6 +48,7 @@ const searchForDuplicate = function(download) {
 
     console.log(download, name);
 
+    // Only handle the download of type video
     if (download.mime && !download.mime.startsWith('video')) {
         return;
     }
@@ -55,7 +56,7 @@ const searchForDuplicate = function(download) {
     return browser.downloads.search({
             query: [name],
             // url: download.url
-            // mime: 'video/mp4'
+            mime: 'video/mp4'
         }).then((downloads) => {
             // Remove the current download item
             const currentDownload = downloads.findIndex(({ id }) => id == download.id);
@@ -97,8 +98,9 @@ const updateCompleteDownload = function update(change) {
     return browser.downloads.search({
         id,
         limit: 1
+
     }).then(([download]) => {
-        if (!download)
+        if (!download || !download.startsWith('video'))
             return undefined;
 
         PnStore.set(download.referrer, new PnItem(download));
