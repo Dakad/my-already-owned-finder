@@ -16,8 +16,14 @@ const _getDomain = function(url) {
     // return link.hostname;
 }
 
-const PnStore = new Map();
+// Get the store Map for PnItem
+let PnStore = new Map();
+browser.storage.local.get('pn')
+    .then(({ pn }) => (pn != undefined ? PnStore = pn : null));
 
+/**
+ * Represent a download item stored in DB.
+ */
 class PnItem {
     constructor({ id, filename, mime, referrer, url, startTime, fileSize, state }) {
         this.id = id;
@@ -33,29 +39,32 @@ class PnItem {
     }
 }
 
+/**
+ * 
+ * @param {DownloadItem} download 
+ */
+const searchForDuplicate = function(download) {
+    const name = _getName(download.filename);
 
-const searchForDuplicate = downloadItem => {
-    const name = _getName(downloadItem.filename);
+    console.log(download, name);
 
-    console.log(downloadItem, name);
-
-    if (downloadItem.mime && !downloadItem.mime.startsWith('video')) {
+    if (download.mime && !download.mime.startsWith('video')) {
         return;
     }
 
     return browser.downloads.search({
             query: [name],
-            // url: downloadItem.url
+            // url: download.url
             // mime: 'video/mp4'
         }).then((downloads) => {
             // Remove the current download item
-            const currentDownload = downloads.findIndex(({ id }) => id == downloadItem.id);
+            const currentDownload = downloads.findIndex(({ id }) => id == download.id);
             downloads.splice(currentDownload, 1);
             return downloads.length == 0;
         }).then(isNew => { // isNew if the rest of splicing is empty
 
             if (isNew) { // No duplicate remaining after splicing
-                const newPn = new PnItem(downloadItem);
+                const newPn = new PnItem(download);
                 PnStore.set(newPn.urlPage, newPn);
                 console.log("New Vids :-)");
                 return browser.storage.local.set({
@@ -63,12 +72,12 @@ const searchForDuplicate = downloadItem => {
                 });
             } else {
                 return Promise.all([
-                    browser.downloads.cancel(downloadItem.id),
-                    browser.downloads.erase({ id: downloadItem.id })
+                    browser.downloads.cancel(download.id),
+                    browser.downloads.erase({ id: download.id })
                 ]);
             }
 
-        }).then(_ => _ ? console.log("Cancel & Erased :-)", downloadItem.id, _) : null)
+        }).then(_ => _ ? console.log("Cancel & Erased :-)", download.id, _) : null)
         .catch(e => console.error("Promise.race : ", e))
 }
 
@@ -96,8 +105,7 @@ const updateCompleteDownload = function update(change) {
 
         return browser.storage.local.set({
             'pn': PnStore
-        });
-        return true;
+        }).then(_ => true);
     }).then(ok => ok ? console.log('Updated PnItem : #' + id) : null);
 
 }
