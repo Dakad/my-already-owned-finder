@@ -3,10 +3,11 @@
     "description": "WebExtension to not download twice the same item",
     "manifest_version": 2,
     "name": "my-already-owned-finder",
-    "version": "1.0",
+    "version": "0.1.0",
     "homepage_url": "https://github.com/Dakad/my-already-owned-finder",
     "icons": {
-        "48": "icons/"
+        "48": "icons/finder.svg",
+        "96": "icons/finder.svg"
     },
 
     "permissions": [
