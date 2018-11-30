@@ -84,6 +84,23 @@ const updateCompleteDownload = function update(change) {
     const { state, id } = change;
     console.log(change.state);
 
+    if(state.previous == 'in_progress' && state.current == 'interrupted') {
+        return browser.downloads.search({
+            id,
+            limit: 1
+        }).then(([download]) => {
+            if (!download)
+                return undefined;
+
+            PnStore.delete(download.referrer);
+
+            return browser.storage.local.set({
+                'pn': PnStore
+            }).then(_ => true);
+        }).then(ok => ok ? console.log('Removed PnItem due to cancelling : #' + id ) : null);
+    }
+
+
     if (state.current != 'complete')
         return undefined;
 
